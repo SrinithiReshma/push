@@ -1,0 +1,115 @@
+const express =require('express');
+const mongoose=require('mongoose');
+const cors=require('cors');
+const bodyParser=require('body-parser');
+
+const app=express();
+const PORT=3000;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+const uri="mongodb+srv://reshma:reshma@dbmon.lksw7.mongodb.net/?retryWrites=true&w=majority&appName=dbmon";
+mongoose.connect(uri)
+.then(() => console.log("connected "))
+.catch((err) => console.error(err));
+
+const eventSchema=new mongoose.Schema({
+    name:String
+});
+const Event=mongoose.model('Event',eventSchema);
+app.get('/events',async (req,res) =>
+{
+    const event=await Event.find();
+    res.json(event);
+});
+app.post('/events',async(req,res) =>
+{
+    const {name}=req.body;
+    const newEvent=new Event({name});
+    await newEvent.save();
+});
+app.delete('/events/:id',async(req,res) =>
+{
+    const eventid=req.params.id;
+    await Event.findByIdAndDelete(eventid);
+    res.json({message:"deleted"});
+});
+app.put('/events/:id',async(req,res) =>
+{
+    const eventid=req.params.id;
+    const {name}=req.body;
+    const upd=await Event.findByIdAndUpdate(eventid,{name},{new : true});
+    res.json(upd);
+});
+app.listen(PORT,() =>
+{
+    console.log("3000");
+})
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form>
+        <input type="text" placeholder="Name" id="name">
+        <button onclick="addEvent()">Add Event</button>
+    </form>
+    <table border="1">
+        <tr>
+        <th>Name</th>
+        <th>Action</th>
+    </tr>
+    <tbody id="eventTable"></tbody>
+    </table>
+</body>
+<script>
+    const apiuri="http://localhost:3000/events";
+    async function loadEvents()
+    {
+        const response=await fetch(apiuri);
+        const events=await response.json();
+        const tableconc=document.getElementById('eventTable');
+        const row=events.map(event => `
+        <tr>
+            <td>${event.name}</td>
+            <td><button onclick=deleteEvent('${event._id}')>DeleteEvent</button><button onclick=editEvent('${event._id}')>Edit Event</button></td>
+            </tr>
+        `).join('');
+        tableconc.innerHTML=row;
+
+    }
+    async function addEvent() {
+        const name=document.getElementById('name').value;
+        const eve={name};
+        await fetch(apiuri,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(eve),
+        });
+        loadEvents();
+    }
+    async function deleteEvent(id) { await fetch(`${apiuri}/${id}`,{method:'DELETE'});
+    loadEvents();    
+    }
+    async function editEvent(id){
+        const name=prompt("enter name");
+        const upeve={name};
+        await fetch(`${apiuri}/${id}`,{
+            method:'PUT',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(upeve),
+
+        })
+        loadEvents();
+    }
+    loadEvents();
+</script>
+</html>

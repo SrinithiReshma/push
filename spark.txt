@@ -1,0 +1,25 @@
+1. sudo apt update
+2. java -version
+3. sudo apt install scala
+4. Download apache spark from https://www.apache.org/dyn/closer.lua/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3.tgz
+5. cd Downloads
+6. ls
+7. tar xvf spark-3.5.3-bin-hadoop3.tgz
+8. sudo mv spark-3.5.3-bin-hadoop3 /usr/local/spark
+8. cd /usr/local/
+9. ls
+10. cd
+11. nano ~/.bashrc
+12. add ' export PATH=$PATH:/usr/local/spark/bin ' at the end and save -> exit
+13. source ~/.bashrc
+14. spark-shell
+15. println("Hello,World!")
+16. Create a file, input.txt in tce id (nano input.txt)
+IN SPARK SHELL
+17. val inputfile=sc.textFile("input.txt")
+18. val counts = inputfile.flatMap(line => line.split(" ")).map(word=>(word,1)).reduceByKey(+)
+19. counts.saveAsTextFile("output")
+IN TCE ID
+20. cd output
+21. ls
+22. cat part-00000

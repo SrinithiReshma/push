@@ -1,0 +1,179 @@
+# Use Nginx as the base image
+FROM nginx:alpine
+
+# Copy the static HTML file to the default Nginx location
+COPY index.html /usr/share/nginx/html/
+
+# Expose port 80 for the web server
+EXPOSE 80
+
+
+
+
+shopping.py
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+# Mock data for shopping items
+shopping_items = [
+    {"id": 1, "name": "Laptop", "price": 700},
+    {"id": 2, "name": "Headphones", "price": 50},
+    {"id": 3, "name": "Smartphone", "price": 300},
+    {"id": 4, "name": "Keyboard", "price": 20},
+    {"id": 5, "name": "Monitor", "price": 150}
+]
+
+@app.route('/items', methods=['GET'])
+def get_items():
+    return jsonify(items=shopping_items)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
+
+
+Dockerfile
+# Use the official Python image from Docker Hub
+FROM python:3.11.9-alpine
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Install Flask
+RUN pip install flask
+
+# Copy the application code into the container
+COPY shopping.py /shopping.py
+
+# Command to run the Python app
+CMD ["python", "shopping.py"]
+
+
+1.sudo apt update
+2.sudo apt install -y docker.io
+3.sudo systemctl start docker
+4.sudo systemctl enable docker
+5.mkdir shopping_app
+6.cd shopping_app
+7.nano shopping.py
+8.nano Dockerfile
+9.sudo docker build -t shopping_app .
+10.sudo docker run -d -p 5000:5000 shopping_app
+
+
+Open your web browser and visit:
+
+http://localhost:5000/items
+
+
+
+from flask import Flask, jsonify, render_template
+
+app = Flask(__name__)
+
+# Mock data for shopping items
+shopping_items = [
+    {"id": 1, "name": "Laptop", "price": 700},
+    {"id": 2, "name": "Headphones", "price": 50},
+    {"id": 3, "name": "Smartphone", "price": 300},
+    {"id": 4, "name": "Keyboard", "price": 20},
+    {"id": 5, "name": "Monitor", "price": 150}
+]
+
+@app.route('/items', methods=['GET'])
+def get_items():
+    return jsonify(items=shopping_items)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
+
+
+
+
+# Use the official Python image from Docker Hub
+FROM python:3.11.9-alpine
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Install Flask
+RUN pip install flask
+
+# Copy the application code and templates into the container
+COPY shopping.py /shopping.py
+COPY templates /templates
+
+# Command to run the Python app
+CMD ["python", "shopping.py"]
+
+
+
+
+templates directory create
+inside it index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Items</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shopping Items</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody id="items-table">
+            <!-- Items will be loaded dynamically -->
+        </tbody>
+    </table>
+
+    <script>
+        // Fetch the items data from the Flask backend
+        fetch('/items')
+            .then(response => response.json())
+            .then(data => {
+                const itemsTable = document.getElementById('items-table');
+                data.items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.price}</td>
+                    `;
+                    itemsTable.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching items:', error));
+    </script>
+</body>
+</html>

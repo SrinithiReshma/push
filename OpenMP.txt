@@ -1,0 +1,231 @@
+OpenMP
+
+
+sudo apt update
+sudo apt install openmpi-bin openmpi-common libopenmpi-dev
+
+
+sudo apt update
+sudo apt install build-essential
+
+gcc --version
+
+gcc -fopenmp openmp_hello.c -o openmp_hello
+./openmp_hello
+
+
+hello 
+
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    #pragma omp parallel
+    {
+        int thread_id = omp_get_thread_num();
+        int num_threads = omp_get_num_threads();
+        printf("Hello from thread %d of %d\n", thread_id, num_threads);
+    }
+    return 0;
+}
+
+
+sum of elements in array
+
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 100;
+    int arr[n];
+    int sum = 0;
+
+    // Initialize the array
+    for (int i = 0; i < n; i++) {
+        arr[i] = i + 1;  // Fill with values from 1 to 100
+    }
+
+    // Parallelize the for loop using OpenMP
+    #pragma omp parallel for reduction(+:sum)
+    for (int i = 0; i < n; i++) {
+        sum += arr[i];
+    }
+
+    printf("The total sum is %d\n", sum);
+    return 0;
+}
+
+
+matrix multiplication
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+#define N 3  // Matrix dimension
+
+void multiply_matrices(int A[N][N], int B[N][N], int C[N][N]) {
+    #pragma omp parallel for
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            C[i][j] = 0;
+            for (int k = 0; k < N; k++) {
+                C[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+int main() {
+    int A[N][N] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    int B[N][N] = {{9, 8, 7}, {6, 5, 4}, {3, 2, 1}};
+    int C[N][N];
+
+    multiply_matrices(A, B, C);
+
+    // Print the result
+    printf("Matrix A x Matrix B = Matrix C\n");
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            printf("%d ", C[i][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
+
+
+greatest number
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n;
+
+    // Input the size of the array
+    printf("Enter the number of elements in the array: ");
+    scanf("%d", &n);
+
+    int arr[n];
+
+    // Input the elements of the array
+    printf("Enter the elements of the array:\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &arr[i]);
+    }
+
+    int greatest = arr[0];  // Initialize the greatest to the first element
+
+    // Parallel block using OpenMP
+    #pragma omp parallel for reduction(max:greatest)
+    for (int i = 1; i < n; i++) {
+        if (arr[i] > greatest) {
+            greatest = arr[i];  // Update greatest if a larger number is found
+        }
+    }
+
+    // Print the greatest number
+    printf("The greatest number in the array is: %d\n", greatest);
+
+    return 0;
+}
+
+
+
+Fibonacci series
+
+#include <stdio.h>
+#include <omp.h>
+
+void fibonacci(int n) {
+    long long fib[n];
+
+    // Parallelize the Fibonacci computation
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        if (i == 0) {
+            fib[i] = 0;
+        } else if (i == 1) {
+            fib[i] = 1;
+        } else {
+            fib[i] = fib[i - 1] + fib[i - 2];
+        }
+    }
+
+    // Print the Fibonacci sequence
+    printf("Fibonacci Sequence up to %d terms:\n", n);
+    for (int i = 0; i < n; i++) {
+        printf("%lld ", fib[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    int n;
+
+    printf("Enter the number of terms for Fibonacci sequence: ");
+    scanf("%d", &n);
+
+    // Call the Fibonacci function
+    fibonacci(n);
+
+    return 0;
+}
+
+
+
+Armstrong
+
+#include <stdio.h>
+#include <math.h>
+#include <omp.h>
+
+// Function to check if a number is an Armstrong number
+int is_armstrong(int num) {
+    int sum = 0, temp = num, digits = 0;
+
+    // Count the number of digits
+    while (temp != 0) {
+        digits++;
+        temp /= 10;
+    }
+
+    temp = num;
+
+    // Calculate the sum of digits raised to the power of the number of digits
+    while (temp != 0) {
+        int digit = temp % 10;
+        sum += pow(digit, digits);
+        temp /= 10;
+    }
+
+    return (sum == num);
+}
+
+void armstrong(int n) {
+    // Parallelize the Armstrong number check
+    #pragma omp parallel for
+    for (int i = 1; i <= n; i++) {
+        if (is_armstrong(i)) {
+            printf("%d is an Armstrong number.\n", i);
+        }
+    }
+}
+
+int main() {
+    int n;
+
+    printf("Enter the upper limit to check Armstrong numbers: ");
+    scanf("%d", &n);
+
+    // Call the Armstrong function
+    armstrong(n);
+
+    return 0;
+}
+
+
+
+
+

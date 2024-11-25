@@ -1,0 +1,105 @@
+import React, { useState } from 'react';
+import { useAuth0 } from "@auth0/auth0-react";
+import LoginButton from "./LoginButton";
+import LogoutButton from "./LogoutButton";
+import Profile from "./Profile";
+
+function App() {
+  const { isAuthenticated } = useAuth0();
+  
+  const [tasks, setTasks] = useState([]); // State to store tasks
+  const [task, setTask] = useState(''); // State to store task description
+  const [number, setNumber] = useState(''); // State to store number input
+  const [editingIndex, setEditingIndex] = useState(null); // For editing an existing task
+
+  // Handle adding a new task
+  const addTask = () => {
+    if (task.trim() && number.trim()) {
+      const newTask = { 
+        id: Date.now(), 
+        text: task, 
+        number: number 
+      };
+      setTasks([...tasks, newTask]);
+      setTask('');
+      setNumber('');
+    }
+  };
+
+  // Handle deleting a task
+  const deleteTask = (id) => {
+    setTasks(tasks.filter(task => task.id !== id));
+  };
+
+  // Handle editing a task
+  const editTask = (index) => {
+    setTask(tasks[index].text);
+    setNumber(tasks[index].number);
+    setEditingIndex(index);
+  };
+
+  // Save edited task
+  const saveTask = () => {
+    const updatedTasks = [...tasks];
+    updatedTasks[editingIndex].text = task;
+    updatedTasks[editingIndex].number = number;
+    setTasks(updatedTasks);
+    setTask('');
+    setNumber('');
+    setEditingIndex(null);
+  };
+
+  return (
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <h1>CRUD Operations in React</h1>
+
+      {/* Conditionally display login/logout button */}
+      {isAuthenticated ? (
+        <>
+          <LogoutButton />
+          <Profile />
+          
+          {/* Input fields for Task Description and Number */}
+          <div>
+            <input 
+              type="text" 
+              value={task} 
+              onChange={(e) => setTask(e.target.value)} 
+              placeholder="Enter task description" 
+            />
+            <input 
+              type="number" 
+              value={number} 
+              onChange={(e) => setNumber(e.target.value)} 
+              placeholder="Enter a number" 
+            />
+            {editingIndex !== null ? (
+              <button onClick={saveTask}>Save Task</button>
+            ) : (
+              <button onClick={addTask}>Add Task</button>
+            )}
+          </div>
+
+          {/* Display the tasks list */}
+          <ul style={{ listStyleType: 'none', padding: 0 }}>
+            {tasks.map((task, index) => (
+              <li key={task.id} style={{ margin: '10px 0' }}>
+                {task.text} - {task.number}
+                <button onClick={() => editTask(index)} style={{ marginLeft: '10px' }}>
+                  Edit
+                </button>
+                <button onClick={() => deleteTask(task.id)} style={{ marginLeft: '10px' }}>
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <LoginButton />
+      )}
+    </div>
+  );
+}
+
+export default App;

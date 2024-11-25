@@ -1,0 +1,47 @@
+const express = require('express');
+const app = express();
+const PORT = 3000;
+
+// Middleware to parse JSON requests
+app.use(express.json());
+
+// In-memory data store
+let events = [];
+let nextId = 1;
+
+// Get all events
+app.get('/events', (req, res) => {
+    res.json(events);
+});
+
+// Add a new event
+app.post('/events', (req, res) => {
+    const newEvent = { id: nextId++, ...req.body };
+    events.push(newEvent);
+    res.json({ message: 'Event added', event: newEvent });
+});
+
+// Delete an event
+app.delete('/events/:id', (req, res) => {
+    const eventId = +req.params.id;
+    events = events.filter(event => event.id !== eventId);
+    res.json({ message: 'Event deleted' });
+});
+
+// Update an event
+app.put('/events/:id', (req, res) => {
+    const eventId = +req.params.id;
+    const event = events.find(event => event.id === eventId);
+
+    if (event) {
+        Object.assign(event, req.body);
+        res.json({ message: 'Event updated', event });
+    } else {
+        res.status(404).json({ message: 'Event not found' });
+    }
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+});

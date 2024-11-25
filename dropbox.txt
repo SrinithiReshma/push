@@ -1,0 +1,21 @@
+import dropbox
+
+# Dropbox access token
+token = ''
+
+# Initialize Dropbox client
+dbx = dropbox.Dropbox(token)
+
+# File paths
+file_path = 'Pictu1.png'  # Local file path
+dropbox_path = '/pict.png'  # Destination path in Dropbox
+
+# Upload file
+try:
+    with open(file_path, 'rb') as f:
+        dbx.files_upload(f.read(), dropbox_path)
+    print("File uploaded successfully to", dropbox_path)
+except dropbox.exceptions.ApiError as e:
+    print("Dropbox API error:", e)
+except FileNotFoundError:
+    print("Local file not found:", file_path)

@@ -1,135 +1,119 @@
 sudo apt update
-sudo apt install ssh
-wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
-ls
-tar -xzf hadoop-3.3.6.tar.gz.3
-ls
-mv hadoop-3.3.6 hadoop
 sudo apt install openjdk-11-jdk
-java -version
+java -version; javac -version
+sudo apt install openssh-server openssh-client -y
+sudo adduser hdoop
+sudo usermod -aG sudo hdoop
+su - hdoop
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
+ssh localhost
+wget https://dlcdn.apache.org/hadoop/common/hadoop-3.4.0/hadoop-3.4.0.tar.gz
+tar xzf hadoop-3.4.0.tar.gz
 
-cloud@tce-VirtualBox:~$ cd hadoop
-cloud@tce-VirtualBox:~/hadoop$ mkdir data
-cloud@tce-VirtualBox:~/hadoop$ cd data
-cloud@tce-VirtualBox:~/hadoop/data$ mkdir datanode
-cloud@tce-VirtualBox:~/hadoop/data$ mkdir namenode
-cloud@tce-VirtualBox:~/hadoop/data$ ls
-datanode  namenode
-cloud@tce-VirtualBox:~/hadoop/data$ 
-
-
-cloud@tce-VirtualBox:~$ gedit ~/.bashrc
-
-
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-export HADOOP_HOME=/home/cloud/hadoop
+nano .bashsrc
+#Hadoop Related Options
+export HADOOP_HOME=/home/hdoop/hadoop-3.4.0
 export HADOOP_INSTALL=$HADOOP_HOME
 export HADOOP_MAPRED_HOME=$HADOOP_HOME
 export HADOOP_COMMON_HOME=$HADOOP_HOME
 export HADOOP_HDFS_HOME=$HADOOP_HOME
-export HADOOP_YARN_HOME=$HADOOP_HOME
-export HADOOP_COMMON_LIB_NATIVE=$HADOOP_HOME/lib/native
-export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
 export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
+source ~/.bashsrc
 
-cloud@tce-VirtualBox:~$ source ~/.bashrc
-
-
-cloud@tce-VirtualBox:~/hadoop/etc/hadoop$ gedit hadoop-env.sh
-
+sudo nano $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+which javac
+readlink -f /usr/bin/javac
+mkdir -p /home/hdoop/tmpdata
+mkdir -p /home/hdoop/dfsdata/namenode
+mkdir -p /home/hdoop/dfsdata/datanode
 
-cloud@tce-VirtualBox:~/hadoop/etc/hadoop$ gedit core-site.xml
-
-
+nano $HADOOP_HOME/etc/hadoop/core-site.xml
 <configuration>
 <property>
-<name>fs.defaultFS</name>
-<value>hdfs://localhost:9000</value>
+  <name>hadoop.tmp.dir</name>
+  <value>/home/hdoop/tmpdata</value>
+</property>
+<property>
+  <name>fs.default.name</name>
+  <value>hdfs://127.0.0.1:9000</value>
 </property>
 </configuration>
 
-
-cloud@tce-VirtualBox:~/hadoop/etc/hadoop$ gedit hdfs-site.xml
-
-
+nano $HADOOP_HOME/etc/hadoop/hdfs-site.xml
 <configuration>
 <property>
-<name>dfs.replication</name>
-<value>3</value>
+  <name>dfs.data.dir</name>
+  <value>/home/hdoop/dfsdata/namenode</value>
 </property>
 <property>
-<name>dfs.name.dir</name>
-<value>/home/cloud/hadoop/data/namenode</value>
+  <name>dfs.data.dir</name>
+  <value>/home/hdoop/dfsdata/datanode</value>
 </property>
 <property>
-<name>dfs.data.dir</name>
-<value>/home/cloud/hadoop/data/datanode</value>
+  <name>dfs.replication</name>
+  <value>1</value>
 </property>
 </configuration>
 
-
-cloud@tce-VirtualBox:~/hadoop/etc/hadoop$ gedit yarn-site.xml
-
-
-<configuration>
-<property>
-  <name>yarn.nodemanager.aux-services</name>
-  <value>mapreduce_shuffle</value>
-</property><property>
-  <name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>
-  <value>org.apache.hadoop.mapred.ShuffleHandler</value>
-</property>
-<property>
-  <name>yarn.resourcemanager.hostname</name>
-  <value>localhost</value>
-</property>
-</configuration>
-
-
-
-cloud@tce-VirtualBox:~/hadoop/etc/hadoop$ gedit mapred-site.xml
-
+nano $HADOOP_HOME/etc/hadoop/mapred-site.xml
 <configuration>
 <property>
   <name>mapreduce.framework.name</name>
   <value>yarn</value>
 </property>
+</configuration>
+
+nano $HADOOP_HOME/etc/hadoop/yarn-site.xml
+<configuration>
 <property>
-  <name>yarn.app.mapreduce.am.env</name>
-  <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+  <name>yarn.nodemanager.aux-services</name>
+  <value>mapreduce_shuffle</value>
 </property>
 <property>
-  <name>mapreduce.map.env</name>
-  <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+  <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+  <value>org.apache.hadoop.mapred.ShuffleHandler</value>
 </property>
 <property>
-  <name>mapreduce.reduce.env</name>
-  <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+  <name>yarn.resourcemanager.hostname</name>
+  <value>127.0.0.1</value>
+</property>
+<property>
+  <name>yarn.acl.enable</name>
+  <value>0</value>
+</property>
+<property>
+  <name>yarn.nodemanager.env-whitelist</name>   
+   <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PERPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
 </property>
 </configuration>
 
-ssh-keygen -t rsa
-
-cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-
-chmod 640 ~/.ssh/authorized_keys
-
 hdfs namenode -format
-
-start-dfs.sh
-start-yarn.sh
+cd hadoop-3.4.0/sbin
+./start-dfs.sh
+./start-yarn.sh
 jps
+localhost:9870
+localhost:9864
+localhost:8088
 
-hdfs dfs -mkdir -p user/hadoop/input
-hdfs dfs  -put /home/cloud/f.txt user/hadoop/input
-hdfs dfs -ls user/hadoop/input
+cd /home/hdoop
+mkdir -p /home/hdoop/input
+echo "hello hi hello" > ~/input/file.txt
+hdfs dfs -mkdir -p /user/hadoop/input
+hdfs dfs -put /home/hdoop/input/file.txt /user/hadoop/input
+hdfs dfs -ls /user/hadoop/input
+hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar wordcount /user/hadoop/input/file.txt /user/hadoop/output
+hdfs dfs -ls /user/hadoop/output
+hdfs dfs -cat /user/hadoop/output/part-r-00000
 
-hadoop jar ~/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar wordcount user/hadoop/input user/hadoop/output
 
-hdfs dfs -ls user/hadoop/output
 
-hdfs dfs -cat  user/hadoop/output/part-r-00000
 
 
 

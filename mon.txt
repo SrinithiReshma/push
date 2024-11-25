@@ -1,115 +1,229 @@
-const express =require('express');
-const mongoose=require('mongoose');
-const cors=require('cors');
-const bodyParser=require('body-parser');
-
-const app=express();
-const PORT=3000;
-
-app.use(cors());
-app.use(bodyParser.json());
-
-const uri="mongodb+srv://reshma:reshma@dbmon.lksw7.mongodb.net/?retryWrites=true&w=majority&appName=dbmon";
-mongoose.connect(uri)
-.then(() => console.log("connected "))
-.catch((err) => console.error(err));
-
-const eventSchema=new mongoose.Schema({
-    name:String
-});
-const Event=mongoose.model('Event',eventSchema);
-app.get('/events',async (req,res) =>
-{
-    const event=await Event.find();
-    res.json(event);
-});
-app.post('/events',async(req,res) =>
-{
-    const {name}=req.body;
-    const newEvent=new Event({name});
-    await newEvent.save();
-});
-app.delete('/events/:id',async(req,res) =>
-{
-    const eventid=req.params.id;
-    await Event.findByIdAndDelete(eventid);
-    res.json({message:"deleted"});
-});
-app.put('/events/:id',async(req,res) =>
-{
-    const eventid=req.params.id;
-    const {name}=req.body;
-    const upd=await Event.findByIdAndUpdate(eventid,{name},{new : true});
-    res.json(upd);
-});
-app.listen(PORT,() =>
-{
-    console.log("3000");
-})
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Event CRUD Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        input,
+        button {
+            padding: 8px;
+            margin: 4px;
+        }
+    </style>
 </head>
+
 <body>
-    <form>
-        <input type="text" placeholder="Name" id="name">
-        <button onclick="addEvent()">Add Event</button>
-    </form>
-    <table border="1">
-        <tr>
-        <th>Name</th>
-        <th>Action</th>
-    </tr>
-    <tbody id="eventTable"></tbody>
-    </table>
-</body>
-<script>
-    const apiuri="http://localhost:3000/events";
-    async function loadEvents()
-    {
-        const response=await fetch(apiuri);
-        const events=await response.json();
-        const tableconc=document.getElementById('eventTable');
-        const row=events.map(event => `
+    <div class="container">
+        <h1>Event Management</h1>
+
+        <div class="form-container">
+            <h2>Add a new Event</h2>
+            <input type="text" id="eventName" placeholder="Event Name">
+            <input type="text" id="eventDate" placeholder="Event Date">
+            <input type="text" id="eventDescription" placeholder="Event Description">
+            <button onclick="addEvent()">Add Event</button>
+        </div>
+
+        <h2>Event List</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="eventTable">
+                <!-- Events will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:3000/events';
+
+        async function loadEvents() {
+            const response = await fetch(apiUrl);
+            const events = await response.json();
+            const tableBody = document.getElementById('eventTable');
+
+            // Generate the HTML for all rows in one go
+            const rowsHtml = events.map(event => `
         <tr>
             <td>${event.name}</td>
-            <td><button onclick=deleteEvent('${event._id}')>DeleteEvent</button><button onclick=editEvent('${event._id}')>Edit Event</button></td>
-            </tr>
-        `).join('');
-        tableconc.innerHTML=row;
+            <td>${event.date}</td>
+            <td>${event.description}</td>
+            <td>
+                <button onclick="editEvent('${event._id}')">Edit</button>
+                <button onclick="deleteEvent('${event._id}')">Delete</button>
+            </td>
+        </tr>
+    `).join(''); // Join array elements into a single string
 
-    }
-    async function addEvent() {
-        const name=document.getElementById('name').value;
-        const eve={name};
-        await fetch(apiuri,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(eve),
-        });
-        loadEvents();
-    }
-    async function deleteEvent(id) { await fetch(`${apiuri}/${id}`,{method:'DELETE'});
-    loadEvents();    
-    }
-    async function editEvent(id){
-        const name=prompt("enter name");
-        const upeve={name};
-        await fetch(`${apiuri}/${id}`,{
-            method:'PUT',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(upeve),
+            tableBody.innerHTML = rowsHtml; // Set the innerHTML of the table body
+        }
 
-        })
+        async function addEvent() {
+            const name = document.getElementById('eventName').value;
+            const date = document.getElementById('eventDate').value;
+            const description = document.getElementById('eventDescription').value;
+            const event = { name, date, description };
+
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(event),
+            });
+
+            loadEvents();
+        }
+
+        async function deleteEvent(id) {
+            await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+            loadEvents();
+        }
+
+        async function editEvent(id) {
+            const name = prompt("Enter new event name:");
+            const date = prompt("Enter new event date:");
+            const description = prompt("Enter new event description:");
+            const updatedEvent = { name, date, description };
+
+            await fetch(`${apiUrl}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedEvent),
+            });
+
+            loadEvents();
+        }
+
+        // Initial load
         loadEvents();
-    }
-    loadEvents();
-</script>
+    </script>
+</body>
+
 </html>
+
+
+
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const app = express();
+const PORT = 3000;
+
+// Middleware to parse JSON requests
+app.use(cors());
+app.use(bodyParser.json());
+
+// MongoDB connection
+const uri = "mongodb+srv://reshma:reshma@dbmon.lksw7.mongodb.net/?retryWrites=true&w=majority&appName=dbmon";
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Connected to MongoDB Atlas'))
+    .catch((err) => console.log('Error connecting to MongoDB Atlas:', err));
+
+// Define Event schema
+const eventSchema = new mongoose.Schema({
+    name: String,
+    date: String,
+    description: String,
+});
+
+// Create Event model
+const Event = mongoose.model('Event', eventSchema);
+
+// Get all events
+app.get('/events', async (req, res) => {
+    try {
+        const events = await Event.find();
+        res.json(events);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching events', error: err });
+    }
+});
+
+// Add a new event
+app.post('/events', async (req, res) => {
+    const { name, date, description } = req.body;
+    const newEvent = new Event({ name, date, description });
+
+    try {
+        await newEvent.save();
+        res.json({ message: 'Event added', event: newEvent });
+    } catch (err) {
+        res.status(500).json({ message: 'Error adding event', error: err });
+    }
+});
+
+// Delete an event
+app.delete('/events/:id', async (req, res) => {
+    const eventId = req.params.id;
+
+    try {
+        await Event.findByIdAndDelete(eventId);
+        res.json({ message: 'Event deleted' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting event', error: err });
+    }
+});
+
+// Update an event
+app.put('/events/:id', async (req, res) => {
+    const eventId = req.params.id;
+    const { name, date, description } = req.body;
+
+    try {
+        const event = await Event.findByIdAndUpdate(eventId, { name, date, description }, { new: true });
+        if (event) {
+            res.json({ message: 'Event updated', event });
+        } else {
+            res.status(404).json({ message: 'Event not found' });
+        }
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating event', error: err });
+    }
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+});

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html ng-app="currencyConverterApp">
+<head>
+    <title>Currency Converter</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .converter {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body ng-controller="CurrencyController">
+    <div class="converter">
+        <h2>Currency Converter</h2>
+        <form ng-submit="convertCurrency()">
+            <label for="amount">Enter Amount (in your base currency):</label>
+            <input type="number" id="amount" ng-model="amount" required>
+
+            <label for="base">Base Currency:</label>
+            <select id="base" ng-model="baseCurrency" ng-options="currency for currency in currencies" required>
+            </select>
+
+            <label for="target">Target Currency:</label>
+            <select id="target" ng-model="targetCurrency" ng-options="currency for currency in currencies" required>
+            </select>
+
+            <button type="submit">Convert</button>
+        </form>
+
+        <div class="result" ng-if="convertedAmount !== null">
+            {{ amount }} {{ baseCurrency }} = {{ convertedAmount }} {{ targetCurrency }}
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+// Define the AngularJS app
+var app = angular.module("currencyConverterApp", []);
+
+// Define the controller
+app.controller("CurrencyController", function($scope, $http) {
+    $scope.currencies = ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD"]; // Add more currencies if needed
+    $scope.baseCurrency = "USD";
+    $scope.targetCurrency = "EUR";
+    $scope.amount = null;
+    $scope.convertedAmount = null;
+
+    // Function to convert currency
+    $scope.convertCurrency = function() {
+        if (!$scope.amount || !$scope.baseCurrency || !$scope.targetCurrency) {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+        const apiKey = "232d3ba9b2e1c41c36b7dd3e"; // Replace with your actual API key
+        const apiUrl = `https://api.exchangerate-api.com/v4/latest/${$scope.baseCurrency}`; // Corrected template literal syntax
+        
+        $http.get(apiUrl)
+            .then(function(response) {
+                const rates = response.data.rates;
+                const rate = rates[$scope.targetCurrency];
+
+                if (rate) {
+                    $scope.convertedAmount = ($scope.amount * rate).toFixed(2);
+                } else {
+                    alert("Conversion rate not available for the selected currencies.");
+                    $scope.convertedAmount = null;
+                }
+            })
+            .catch(function(error) {
+                console.error("Error fetching conversion rates:", error);
+                alert("Failed to fetch currency conversion rates. Please try again.");
+            });
+    };
+});
+

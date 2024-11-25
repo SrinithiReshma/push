@@ -7,6 +7,31 @@ COPY index.html /usr/share/nginx/html/
 # Expose port 80 for the web server
 EXPOSE 80
 
+sudo apt-get update
+sudo apt install docker.io
+sudo systemctl enable docker
+sudo systemctl status docker     (-->active if not active use sudo systemctl start docker to get active)
+nano Dockerfile
+(FROM ubuntu:latest
+ RUN apt-get update
+ CMD ["echo","helloo all"])
+sudo docker build -t sampleimg .
+sudo docker images
+sudo docker run sampleimg
+sudo docker login
+(username : karthigaravi
+ pass: karthi200529)
+sudo docker tag sampleimg:latest kerthigaravi/samp
+sudo docker push karthigaravi/samp:latest
+sudo docker images
+sudo docker pull karthigaravi/samp:latest
+sudo docker run karthigaravi/samp:latest (Same op as sudo docker run sampleimg this cmd)
+sudo docker rmi sampleimg:latest(delete image)
+sudo docker ps -a
+sudo docker rm container_id(Removes the container)
+
+
+
 
 
 
